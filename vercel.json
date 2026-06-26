@@ -5,6 +5,10 @@
       "dest": "/api/websdr-live"
     },
     {
+      "src": "/api/station-embed",
+      "dest": "/api/station-embed"
+    },
+    {
       "handle": "filesystem"
     },
     {
