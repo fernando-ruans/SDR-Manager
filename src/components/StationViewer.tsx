@@ -9,7 +9,6 @@ type StationViewerProps = {
 
 export function StationViewer({ station, onToggleFavorite, isFavorite }: StationViewerProps) {
   const [iframeError, setIframeError] = useState(false);
-  const [forceEmbed, setForceEmbed] = useState(false);
 
   const iframeSrc = useMemo(() => {
     if (!station) {
@@ -17,7 +16,7 @@ export function StationViewer({ station, onToggleFavorite, isFavorite }: Station
     }
 
     if (typeof window !== 'undefined' && window.location.protocol === 'https:' && station.iframeUrl.startsWith('http://')) {
-      return station.iframeUrl.replace('http://', 'https://');
+      return `/api/station-embed?station=${encodeURIComponent(station.iframeUrl)}`;
     }
 
     return station.iframeUrl;
@@ -29,11 +28,8 @@ export function StationViewer({ station, onToggleFavorite, isFavorite }: Station
     window.location.protocol === 'https:' &&
     originalUrl.startsWith('http://');
 
-  const shouldShowEmbed = !insecureInHttps || forceEmbed;
-
   useEffect(() => {
     setIframeError(false);
-    setForceEmbed(false);
   }, [station?.id, iframeSrc]);
 
   if (!station) {
@@ -70,30 +66,7 @@ export function StationViewer({ station, onToggleFavorite, isFavorite }: Station
 
       <div className="grid flex-1 gap-4 p-4 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="overflow-hidden rounded-3xl border border-hub-border bg-black/40">
-          {!shouldShowEmbed ? (
-            <div className="flex h-[420px] flex-col items-center justify-center gap-4 p-6 text-center text-slate-300 lg:h-full">
-              <p className="max-w-md text-sm leading-6">
-                Esta estação publica o WebSDR em HTTP. Em ambiente HTTPS, o navegador pode bloquear a incorporação.
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setForceEmbed(true)}
-                  className="rounded-2xl border border-hub-border bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
-                >
-                  Tentar modo embutido (HTTPS)
-                </button>
-                <a
-                  href={originalUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-2xl border border-hub-cyan/60 bg-hub-cyan/15 px-4 py-2 text-sm font-medium text-hub-text transition hover:bg-hub-cyan/25"
-                >
-                  Abrir estação em nova aba
-                </a>
-              </div>
-            </div>
-          ) : iframeError ? (
+          {iframeError ? (
             <div className="flex h-[420px] flex-col items-center justify-center gap-4 p-6 text-center text-slate-300 lg:h-full">
               <p className="max-w-md text-sm leading-6">
                 Esta estação não permitiu incorporação no painel seguro. Use a abertura externa para operar o rádio.
@@ -103,20 +76,19 @@ export function StationViewer({ station, onToggleFavorite, isFavorite }: Station
                   type="button"
                   onClick={() => {
                     setIframeError(false);
-                    setForceEmbed(true);
                   }}
                   className="rounded-2xl border border-hub-border bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
                 >
                   Tentar novamente
                 </button>
-              <a
-                href={originalUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-2xl border border-hub-cyan/60 bg-hub-cyan/15 px-4 py-2 text-sm font-medium text-hub-text transition hover:bg-hub-cyan/25"
-              >
-                Abrir estação em nova aba
-              </a>
+                <a
+                  href={originalUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-2xl border border-hub-cyan/60 bg-hub-cyan/15 px-4 py-2 text-sm font-medium text-hub-text transition hover:bg-hub-cyan/25"
+                >
+                  Abrir estação em nova aba
+                </a>
               </div>
             </div>
           ) : (
@@ -168,7 +140,8 @@ export function StationViewer({ station, onToggleFavorite, isFavorite }: Station
             </p>
             {insecureInHttps ? (
               <p className="mt-3 text-xs text-amber-300">
-                A aplicação está em HTTPS e a estação original é HTTP. Foi tentada versão HTTPS automaticamente.
+                A aplicação está em HTTPS e a estação original é HTTP. O app usa um túnel HTTPS interno para manter
+                o SDR embutido quando possível.
               </p>
             ) : null}
           </div>
