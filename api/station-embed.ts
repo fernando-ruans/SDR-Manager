@@ -40,7 +40,7 @@ function rewriteHtml(html: string, station: URL, target: URL): string {
     return `/api/station-embed?station=${stationEncoded}&path=${encodeURIComponent(path)}`;
   };
 
-  const rewritten = html.replace(/\b(src|href|action)=(["'])([^"']+)\2/gi, (full, attr, quote, rawValue) => {
+  const rewrittenRefs = html.replace(/\b(src|href|action)=(["'])([^"']+)\2/gi, (full, attr, quote, rawValue) => {
     if (
       rawValue.startsWith('#') ||
       rawValue.startsWith('data:') ||
@@ -64,6 +64,10 @@ function rewriteHtml(html: string, station: URL, target: URL): string {
 
     return `${attr}=${quote}${toProxy(resolved)}${quote}`;
   });
+
+  const rewritten = rewrittenRefs
+    .replace(/\btarget=(["'])(?:_top|_parent)\1/gi, (_match, quote: string) => `target=${quote}_self${quote}`)
+    .replace(/<base\b([^>]*?)target=(["'])[^"']+\2([^>]*)>/gi, '<base$1$3>');
 
   const runtimePatch = `
 <script>

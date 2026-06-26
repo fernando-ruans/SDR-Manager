@@ -97,6 +97,7 @@ export function StationViewer({ station, onToggleFavorite, isFavorite }: Station
               src={iframeSrc}
               className="h-[420px] w-full bg-black lg:h-full"
               allow="microphone; autoplay; fullscreen"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"
               loading="lazy"
               onError={() => setIframeError(true)}
             />
