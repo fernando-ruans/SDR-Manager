@@ -1,0 +1,15 @@
+{
+  "routes": [
+    {
+      "src": "/api/websdr-live",
+      "dest": "/api/websdr-live"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import type { Station } from '../types';
 
 type StationViewerProps = {
@@ -7,6 +8,30 @@ type StationViewerProps = {
 };
 
 export function StationViewer({ station, onToggleFavorite, isFavorite }: StationViewerProps) {
+  const [iframeError, setIframeError] = useState(false);
+
+  const iframeSrc = useMemo(() => {
+    if (!station) {
+      return '';
+    }
+
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && station.iframeUrl.startsWith('http://')) {
+      return station.iframeUrl.replace('http://', 'https://');
+    }
+
+    return station.iframeUrl;
+  }, [station]);
+
+  const originalUrl = station?.url ?? '';
+  const insecureInHttps =
+    typeof window !== 'undefined' &&
+    window.location.protocol === 'https:' &&
+    originalUrl.startsWith('http://');
+
+  useEffect(() => {
+    setIframeError(false);
+  }, [station?.id, iframeSrc]);
+
   if (!station) {
     return (
       <section className="flex h-full min-h-[420px] items-center justify-center rounded-3xl border border-hub-border bg-hub-panel/90 p-6 text-center text-slate-400 shadow-glow">
@@ -41,13 +66,30 @@ export function StationViewer({ station, onToggleFavorite, isFavorite }: Station
 
       <div className="grid flex-1 gap-4 p-4 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="overflow-hidden rounded-3xl border border-hub-border bg-black/40">
-          <iframe
-            title={station.name}
-            src={station.iframeUrl}
-            className="h-[420px] w-full bg-black lg:h-full"
-            allow="microphone; autoplay; fullscreen"
-            loading="lazy"
-          />
+          {iframeError ? (
+            <div className="flex h-[420px] flex-col items-center justify-center gap-4 p-6 text-center text-slate-300 lg:h-full">
+              <p className="max-w-md text-sm leading-6">
+                Esta estação não permitiu incorporação no painel seguro. Use a abertura externa para operar o rádio.
+              </p>
+              <a
+                href={originalUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-2xl border border-hub-cyan/60 bg-hub-cyan/15 px-4 py-2 text-sm font-medium text-hub-text transition hover:bg-hub-cyan/25"
+              >
+                Abrir estação em nova aba
+              </a>
+            </div>
+          ) : (
+            <iframe
+              title={station.name}
+              src={iframeSrc}
+              className="h-[420px] w-full bg-black lg:h-full"
+              allow="microphone; autoplay; fullscreen"
+              loading="lazy"
+              onError={() => setIframeError(true)}
+            />
+          )}
         </div>
 
         <div className="flex flex-col gap-4">
@@ -85,6 +127,11 @@ export function StationViewer({ station, onToggleFavorite, isFavorite }: Station
               O iframe é carregado diretamente da estação selecionada. Se algum host bloquear incorporação,
               esta área servirá como base para um player alternativo ou view modal.
             </p>
+            {insecureInHttps ? (
+              <p className="mt-3 text-xs text-amber-300">
+                A aplicação está em HTTPS e a estação original é HTTP. Foi tentada versão HTTPS automaticamente.
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
